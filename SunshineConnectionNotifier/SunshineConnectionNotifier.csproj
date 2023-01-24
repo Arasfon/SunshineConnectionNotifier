@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net7.0-windows10.0.22000.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Title>Sunshine Connection Notifier</Title>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <Authors>Arasfon</Authors>
+    <Copyright>(C) Arasfon, 2023</Copyright>
+    <PackageProjectUrl>https://github.com/Arasfon/SunshineConnectionNotifier</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Arasfon/SunshineConnectionNotifier</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications" Version="7.1.3" />
+    <PackageReference Include="WmiLight" Version="3.1.0" />
+  </ItemGroup>
+
+</Project>
