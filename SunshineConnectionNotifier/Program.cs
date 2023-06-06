@@ -41,10 +41,7 @@ internal class Program
 
         using WmiConnection con = new();
 
-        bool connectionActive = con.CreateQuery("SELECT * FROM Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine")
-            .Select(x => PidRegex().Match((string)x["Name"]).Groups[1].Value)
-            .Distinct()
-            .Contains(sunshinePid.ToString());
+        bool connectionActive = con.CreateQuery($"SELECT Name FROM Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine WHERE Name LIKE \"pid_{sunshinePid}_%\"").Any();
 
         Log.Verbose($"Connection is {(connectionActive ? "" : "not ")}active");
 
