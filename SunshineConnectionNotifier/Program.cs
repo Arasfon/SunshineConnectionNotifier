@@ -1,26 +1,32 @@
 ﻿using Microsoft.Toolkit.Uwp.Notifications;
 
+using Serilog;
+
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 
 using WmiLight;
 
 namespace SunshineConnectionNotifier;
 
-internal partial class Program
+internal class Program
 {
-    [GeneratedRegex("pid_(\\d+)_.+")]
-    private static partial Regex PidRegex();
-
     private static Timer? _timer;
 
     private static bool _connectionExisted;
 
     public static async Task Main(string[] args)
     {
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Verbose()
+            .WriteTo.Debug()
+            .WriteTo.File("log.txt")
+            .CreateLogger();
+
         _timer = new Timer(TimerCallback, null, 0, 10000);
 
         await Task.Delay(-1);
+
+        await Log.CloseAndFlushAsync();
     }
 
     private static void TimerCallback(object? state)
@@ -29,7 +35,7 @@ internal partial class Program
 
         if (sunshinePid is null)
         {
-            Console.WriteLine($"{DateTime.Now} [check] Sunshine is not running");
+            Log.Verbose("Sunshine is not running");
             return;
         }
 
@@ -40,7 +46,7 @@ internal partial class Program
             .Distinct()
             .Contains(sunshinePid.ToString());
 
-        Console.WriteLine($"[{DateTime.Now}] Connection is {(connectionActive ? "" : "not ")}active");
+        Log.Verbose($"Connection is {(connectionActive ? "" : "not ")}active");
 
         if (connectionActive != _connectionExisted)
         {
@@ -57,7 +63,7 @@ internal partial class Program
                     .Show();
             }
 
-            Console.WriteLine($"[{DateTime.Now}] Sent notification");
+            Log.Information("Sent notification");
         }
 
         _connectionExisted = connectionActive;
