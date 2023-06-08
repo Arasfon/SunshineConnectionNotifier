@@ -2,19 +2,14 @@
 
 using Serilog;
 using Serilog.Events;
-using System.Diagnostics;
-
-using WmiLight;
 
 namespace SunshineConnectionNotifier;
 
 internal class Program
 {
-    private static Timer? _timer;
-
-    private static bool _connectionExisted;
-
     private static readonly ConfigurationManager ConfigurationManager = new();
+
+    private static bool _exiting = false;
 
     public static async Task Main(string[] args)
     {
@@ -24,55 +19,44 @@ internal class Program
             .WriteTo.File("log.txt", restrictedToMinimumLevel: LogEventLevel.Debug)
             .CreateLogger();
 
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => _exiting = true;
+
         await ConfigurationManager.LoadConfiguration();
 
         ConfigurationManager.StartWatching();
 
-        _timer = new Timer(TimerCallback, null, 0, ConfigurationManager.Configuration!.PollingInterval);
+        await using FileStream sunshineLogFileStream = File.Open(ConfigurationManager.Configuration!.LogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using StreamReader sunshineLogReader = new(sunshineLogFileStream);
+        
+        // Move to an end
+        sunshineLogReader.BaseStream.Seek(0, SeekOrigin.End);
 
-        ConfigurationManager.ConfigurationChanged += (_, _) =>
-            _timer.Change(0, ConfigurationManager.Configuration!.PollingInterval);
+        while (!_exiting)
+        {
+            while (sunshineLogReader.EndOfStream != true)
+            {
+                var line = (await sunshineLogReader.ReadLineAsync())!.ToLowerInvariant();
+                if (line.Contains("client connected"))
+                {
+                    new ToastContentBuilder()
+                        .AddText("New connection to Sunshine is established")
+                        .Show();
 
-        await Task.Delay(-1);
+                    Log.Information("New connection found, notification sent");
+                }
+                else if (line.Contains("client disconnected"))
+                {
+                    new ToastContentBuilder()
+                        .AddText("Connection to Sunshine was closed")
+                        .Show();
+
+                    Log.Information("Connection close found, notification sent");
+                }
+            }
+            await Task.Delay(ConfigurationManager.Configuration!.PollingInterval);
+        }
 
         ConfigurationManager.StopWatching();
         await Log.CloseAndFlushAsync();
-    }
-
-    private static void TimerCallback(object? state)
-    {
-        int? sunshinePid = Process.GetProcesses().FirstOrDefault(x => x.ProcessName == "sunshine")?.Id;
-
-        if (sunshinePid is null)
-        {
-            Log.Verbose("Sunshine is not running");
-            return;
-        }
-
-        using WmiConnection con = new();
-
-        bool connectionActive = con.CreateQuery($"SELECT Name FROM Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine WHERE Name LIKE \"pid_{sunshinePid}_%\"").Any();
-
-        Log.Verbose($"Connection is {(connectionActive ? "" : "not ")}active");
-
-        if (connectionActive != _connectionExisted)
-        {
-            if (connectionActive)
-            {
-                new ToastContentBuilder()
-                    .AddText("New connection to Sunshine is established")
-                    .Show();
-            }
-            else
-            {
-                new ToastContentBuilder()
-                    .AddText("Connection to Sunshine was closed")
-                    .Show();
-            }
-
-            Log.Information("Sent notification");
-        }
-
-        _connectionExisted = connectionActive;
     }
 }
