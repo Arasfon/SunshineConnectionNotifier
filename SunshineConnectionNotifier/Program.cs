@@ -1,7 +1,7 @@
 ﻿using Microsoft.Toolkit.Uwp.Notifications;
 
 using Serilog;
-
+using Serilog.Events;
 using System.Diagnostics;
 
 using WmiLight;
@@ -19,7 +19,7 @@ internal class Program
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Verbose()
             .WriteTo.Debug()
-            .WriteTo.File("log.txt")
+            .WriteTo.File("log.txt", restrictedToMinimumLevel: LogEventLevel.Debug)
             .CreateLogger();
 
         _timer = new Timer(TimerCallback, null, 0, 10000);
