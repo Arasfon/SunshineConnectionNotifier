@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Title>Sunshine Connection Notifier</Title>
-    <VersionPrefix>1.0.1</VersionPrefix>
+    <VersionPrefix>1.1.0</VersionPrefix>
     <Authors>Arasfon</Authors>
     <Copyright>(C) Arasfon, 2023</Copyright>
     <PackageProjectUrl>https://github.com/Arasfon/SunshineConnectionNotifier</PackageProjectUrl>
