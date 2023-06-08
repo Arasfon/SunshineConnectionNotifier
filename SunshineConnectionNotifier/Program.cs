@@ -14,6 +14,8 @@ internal class Program
 
     private static bool _connectionExisted;
 
+    private static readonly ConfigurationManager ConfigurationManager = new();
+
     public static async Task Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
@@ -22,10 +24,18 @@ internal class Program
             .WriteTo.File("log.txt", restrictedToMinimumLevel: LogEventLevel.Debug)
             .CreateLogger();
 
-        _timer = new Timer(TimerCallback, null, 0, 10000);
+        await ConfigurationManager.LoadConfiguration();
+
+        ConfigurationManager.StartWatching();
+
+        _timer = new Timer(TimerCallback, null, 0, ConfigurationManager.Configuration!.PollingInterval);
+
+        ConfigurationManager.ConfigurationChanged += (_, _) =>
+            _timer.Change(0, ConfigurationManager.Configuration!.PollingInterval);
 
         await Task.Delay(-1);
 
+        ConfigurationManager.StopWatching();
         await Log.CloseAndFlushAsync();
     }
 
