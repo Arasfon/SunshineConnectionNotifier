@@ -16,24 +16,10 @@ public class ConfigurationManager
     {
         if (!File.Exists("configuration.json"))
         {
-            Configuration configuration = new();
-            Configuration = configuration;
-
-            try
+            if (Configuration is null)
             {
-                await using StreamWriter sw = new("configuration.json");
-                await JsonSerializer.SerializeAsync(sw.BaseStream, configuration, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    WriteIndented = true
-                });
-
-                Log.Verbose("Configuration created and loaded");
-            }
-            catch
-            {
-                Log.Warning("Failed to create default configuration");
-                Log.Verbose("Configuration loaded");
+                Configuration ??= new Configuration();
+                Log.Information("Deafult configuration loaded");
             }
 
             return;
@@ -59,7 +45,7 @@ public class ConfigurationManager
             return;
         }
 
-        Log.Verbose("Configuration loaded");
+        Log.Information("Configuration loaded from disk");
     }
 
     public void StartWatching()
@@ -71,8 +57,8 @@ public class ConfigurationManager
             Filter = "configuration.json"
         };
 
+        _watcher.Created += OnWatcherEvent;
         _watcher.Changed += OnWatcherEvent;
-        _watcher.Deleted += OnWatcherEvent;
 
         _watcher.EnableRaisingEvents = true;
 
@@ -81,7 +67,11 @@ public class ConfigurationManager
 
     public void StopWatching()
     {
-        _watcher?.Dispose();
+        if (_watcher is not null)
+        {
+            _watcher.EnableRaisingEvents = false;
+            _watcher.Dispose();
+        }
         _watcher = null;
 
         Log.Information("ConfigurationManager watch stopped");
@@ -89,7 +79,7 @@ public class ConfigurationManager
 
     private async void OnWatcherEvent(object sender, FileSystemEventArgs e)
     {
-        Log.Debug("Configuration changed");
+        Log.Debug("Configuration file changed");
 
         await LoadConfiguration();
         ConfigurationChanged?.Invoke(this, EventArgs.Empty);
