@@ -1,4 +1,6 @@
-﻿namespace SunshineConnectionNotifier;
+﻿using System.Text.Json.Serialization;
+
+namespace SunshineConnectionNotifier;
 
 public class Configuration
 {
@@ -16,4 +18,11 @@ public class Configuration
 
         throw new PlatformNotSupportedException();
     }
+}
+
+[JsonSerializable(typeof(Configuration))]
+[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+internal partial class ConfigurationJsonContext : JsonSerializerContext
+{
+
 }

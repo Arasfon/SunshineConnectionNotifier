@@ -30,11 +30,7 @@ public class ConfigurationManager
             await using FileStream fsr = File.Open("configuration.json", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using StreamReader sr = new(fsr);
 
-            Configuration cfg = (await JsonSerializer.DeserializeAsync<Configuration>(sr.BaseStream,
-                new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                }))!;
+            Configuration cfg = (await JsonSerializer.DeserializeAsync(sr.BaseStream, ConfigurationJsonContext.Default.Configuration))!;
 
             Configuration = cfg;
         }
